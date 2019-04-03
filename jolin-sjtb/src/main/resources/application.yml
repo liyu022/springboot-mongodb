@@ -1,0 +1,42 @@
+server:
+  port: 8861
+  max-http-header-size: 10000000
+spring:
+  application:
+    name: jolin-sjtb
+  datasource:
+    hikari:
+#      jdbc-url: jdbc:oracle:thin:@10.228.2.184:1521/orclyj
+#      username: JTYJ_HD
+#      password: JTYJ_HD
+      jdbc-url: jdbc:oracle:thin:@127.0.0.1:1521/orcl
+      username: jolin
+      password: jolin
+      driver-class-name: oracle.jdbc.OracleDriver
+      type: com.alibaba.druid.pool.DruidDataSource
+  data:
+    mongodb:
+      datebase: gis
+      host: 127.0.0.1
+      port: 27017
+      username: gisdb
+      password: gisdb
+logging:
+  level:
+    org.springframework.data.mongodb.core: DEBUG
+mybatis:
+  mapperLocations: classpath:/xml/*.xml
+  typeAliasesPackage: com.hdsx.lwgl.sjtb.entity
+  config-location: classpath:mybatis-config.xml
+
+#pagehelper分页插件配置
+pagehelper:
+  helper-dialect: oracle
+  reasonable: true
+  support-methods-arguments: true
+  offset-as-page-num: true
+  row-bounds-with-count: true
+  params: count=countSql
+
+
+

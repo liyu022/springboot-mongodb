@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hdsx.lwgl.sjtb.mapper.GPSMapper" >
+    <resultMap id="BaseResultMap" type="com.hdsx.lwgl.sjtb.entity.VEHICLE_GPS" >
+        <id column="PLATE_NUMBERS" property="plateNumbers" jdbcType="VARCHAR" />
+        <result column="ID" property="id" jdbcType="DECIMAL" />
+        <result column="LON" property="lon" jdbcType="DECIMAL" />
+        <result column="LAT" property="lat" jdbcType="DECIMAL" />
+        <result column="SPEED1" property="speed1" jdbcType="DECIMAL" />
+        <result column="DIRECTION" property="direction" jdbcType="DECIMAL" />
+        <result column="GEOMETRY" property="geometry" jdbcType="CLOB" />
+        <result column="MILEAGE" property="mileage" jdbcType="DECIMAL" />
+        <result column="ALTITUDE" property="altitude" jdbcType="DECIMAL" />
+        <result column="STATE" property="state" jdbcType="DECIMAL" />
+        <result column="ALARM" property="alarm" jdbcType="DECIMAL" />
+        <result column="GPSTIME" property="gpstime" jdbcType="DATE" />
+        <result column="ADDTIME" property="addtime" jdbcType="DATE" />
+        <result column="SPEED2" property="speed2" jdbcType="DECIMAL" />
+        <result column="LDDM" property="lddm" jdbcType="VARCHAR" />
+        <result column="CARTYPE" property="cartype" jdbcType="DECIMAL" />
+    </resultMap>
+
+    <sql id="Base_Column_List" >
+    PLATE_NUMBERS, ID, LON, LAT, SPEED1, DIRECTION, 'Point ('||g.lon||' '||g.lat||')' AS GEOMETRY, AS GEOMETRY, MILEAGE, ALTITUDE, STATE,
+    ALARM, GPSTIME, ADDTIME, SPEED2, LDDM, CARTYPE
+  </sql>
+
+    <select id="GetGPSMaxTime" resultType="java.util.Date">
+      select max(t.UPDATE_TIME) from V_GPS t
+    </select>
+
+    <resultMap id="FeatureResultMapFull" type="com.hdsx.lwgl.sjtb.entity.GPSEntity" >
+        <id column="locationId" property="locationId" jdbcType="VARCHAR" />
+        <result column="GEOMETRY" property="geometry" jdbcType="VARCHAR" />
+        <result column="GEOMETRYTYPE" property="geometryType" jdbcType="VARCHAR" />
+        <association property="attributes" javaType="com.hdsx.lwgl.sjtb.entity.FeatureGpsAttribute">
+            <id column="PLATE_NUMBERS" property="id" jdbcType="VARCHAR" />
+            <result column="LON" property="lon" jdbcType="DECIMAL" />
+            <result column="LAT" property="lat" jdbcType="DECIMAL" />
+            <result column="SPEED1" property="speed1" jdbcType="DECIMAL" />
+            <result column="DIRECTION" property="direction" jdbcType="DECIMAL" />
+            <result column="MILEAGE" property="mileage" jdbcType="DECIMAL" />
+            <result column="ALTITUDE" property="altitude" jdbcType="DECIMAL" />
+            <result column="STATE" property="state" jdbcType="DECIMAL" />
+            <result column="ALARM" property="alarm" jdbcType="DECIMAL" />
+            <result column="GPSTIME" property="gpstime" jdbcType="DATE" />
+            <result column="ADDTIME" property="addtime" jdbcType="DATE" />
+            <result column="SPEED2" property="speed2" jdbcType="DECIMAL" />
+            <result column="LDDM" property="lddm" jdbcType="VARCHAR" />
+            <result column="LXMC" property="lxmc" jdbcType="VARCHAR" />
+            <result column="vehiclestate" property="vehiclestate" jdbcType="VARCHAR" />
+            <result column="isspeeding" property="isspeeding" jdbcType="VARCHAR" />
+            <result column="carCompany" property="carCompany" jdbcType="VARCHAR" />
+            <result column="carriageRes" property="carriageRes" jdbcType="VARCHAR" />
+            <result column="certificateUnit" property="certificateUnit" jdbcType="VARCHAR" />
+            <result column="carType" property="carType" jdbcType="DECIMAL"/>
+        </association>
+        <association property="location" javaType="com.hdsx.lwgl.sjtb.entity.GeoJsonPoint">
+            <result column="type" property="type" jdbcType="VARCHAR" />
+            <result column="coordinates" property="coordinates" typeHandler="com.hdsx.lwgl.sjtb.util.JsonBigDecimalArrayTypeHandler"/>
+        </association>
+    </resultMap>
+
+    <!--  查询行驶在指定路线的车辆信息 -->
+    <select id="GetGPSList" parameterType="java.util.Map" resultMap="FeatureResultMapFull">
+        SELECT
+        'Point ('||g.lon||' '||g.lat||')' AS GEOMETRY,
+        'Point' AS GEOMETRYTYPE,
+        g.PLATE_NUMBERS,
+        to_number(g.lon) as LON,
+        to_number(g.lat) as LAT,
+        to_number(g.SPEED1) as SPEED1,
+        to_number(g.DIRECTION) as DIRECTION,
+        to_number(g.MILEAGE) as MILEAGE,
+        to_number(g.ALTITUDE) as ALTITUDE,
+        to_number(g.STATE) as STATE,
+        to_number(g.ALARM) as ALARM,
+        g.GPSTIME,
+        g.UPDATE_TIME as ADDTIME,
+        to_number(g.SPEED2) as SPEED2,
+        g.LDDM,
+        g.isspeeding,
+        g.vehiclestate,
+        '' as LXMC,
+        '' as carCompany,
+        '' as carriageRes,
+        '' as certificateUnit,
+        to_number(g.carType) as carType,
+        'Point' AS type,
+         '['||g.lon||','||g.lat||']'as coordinates
+        FROM V_GPS g
+        Where 1=1 AND (g.lon <![CDATA[<= 180 ]]> AND  g.lon <![CDATA[  >= 0 ]]>)
+        AND (g.lat <![CDATA[<= 180 ]]> AND  g.lat<![CDATA[  >= 0 ]]>)
+    </select>
+
+    <!--  查询时间段内的数据 -->
+    <select id="GetGPSListByDate" parameterType="java.util.Map" resultMap="FeatureResultMapFull">
+        SELECT
+        'Point ('||g.lon||' '||g.lat||')' AS GEOMETRY,
+        'Point' AS GEOMETRYTYPE,
+        g.PLATE_NUMBERS,
+        to_number(g.lon) as LON,
+        to_number(g.lat) as LAT,
+        to_number(g.SPEED1) as SPEED1,
+        to_number(g.DIRECTION) as DIRECTION,
+        to_number(g.MILEAGE) as MILEAGE,
+        to_number(g.ALTITUDE) as ALTITUDE,
+        to_number(g.STATE) as STATE,
+        to_number(g.ALARM) as ALARM,
+        g.GPSTIME,
+        g.UPDATE_TIME as ADDTIME,
+        to_number(g.SPEED2) as SPEED2,
+        g.LDDM,
+        g.isspeeding,
+        g.vehiclestate,
+        '' as LXMC,
+        '' as carCompany,
+        '' as carriageRes,
+        '' as certificateUnit,
+        to_number(g.carType) as carType,
+        'Point' AS type,
+         '['||g.lon||','||g.lat||']'as coordinates
+        FROM V_GPS g
+        WHERE 1=1 AND (g.lon <![CDATA[<= 180 ]]> AND  g.lon <![CDATA[  >= 0 ]]>)AND (g.lat <![CDATA[<= 180 ]]> AND  g.lat<![CDATA[  >= 0 ]]>)
+        <if test="addtime != null and gpszx != null" >
+            AND (g.UPDATE_TIME <![CDATA[ > ]]> #{addtime,jdbcType=TIMESTAMP} and g.UPDATE_TIME <![CDATA[ <= ]]>
+            #{gpszx,jdbcType=TIMESTAMP})
+        </if>
+    </select>
+
+
+
+
+
+</mapper>
