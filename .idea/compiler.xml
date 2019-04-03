@@ -12,11 +12,12 @@
     <bytecodeTargetLevel>
       <module name="jolin-sjtb" target="1.8" />
       <module name="sjtb" target="1.8" />
-      <module name="springboot-mongodb" target="1.6" />
+      <module name="springboot-mongodb" target="1.8" />
     </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="jolin-sjtb" options="-parameters" />
       <module name="sjtb" options="-parameters" />
     </option>
   </component>
