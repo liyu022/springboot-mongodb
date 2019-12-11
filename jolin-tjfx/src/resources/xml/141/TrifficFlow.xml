@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hdsx.lwgl.statanalysis.mapper141.TrifficFlowMapper">
+
+
+    <sql id="leftTable">
+        <if test="interval == &quot;y&quot; ">
+            SELECT rownum rn FROM DUAL CONNECT BY rownum <![CDATA[ <= ]]> 12
+        </if>
+        <if test="interval == &quot;m&quot; ">
+            SELECT rownum rn FROM DUAL CONNECT BY rownum <![CDATA[ <= ]]> (select add_months(to_date(#{date,jdbcType=VARCHAR}, 'YYYYMM'), 1) -
+            to_date(#{date,jdbcType=VARCHAR}, 'YYYYMM')
+            from dual)
+        </if>
+    </sql>
+
+    <sql id="rightTable" >
+        <if test="interval == &quot;y&quot; ">
+            select to_number(to_char(t.month, 'mm')) as rn, sum(t.rkjtl) as rkjtl
+            from sa_qsgsrkjtl t
+            where t.cartype = #{carType,jdbcType=DECIMAL}
+            and to_char(t.month, 'yyyy') = #{date,jdbcType=VARCHAR}
+            group by to_number(to_char(t.month, 'mm'))
+        </if>
+        <if test="interval == &quot;m&quot; ">
+            select to_number(to_char(t.month, 'dd')) as rn, t.rkjtl
+            from sa_qsgsrkjtl t
+            where t.cartype = #{carType,jdbcType=DECIMAL}
+            and to_char(t.month, 'yyyyMM') = #{date,jdbcType=VARCHAR}
+        </if>
+    </sql>
+
+    <select id="getDateList" parameterType="hashmap" resultType="int">
+        <include refid="leftTable"/>
+    </select>
+
+    <select id="getProvinceHighWayByDate" parameterType="hashmap" resultType="int" >
+        select
+          nvl(b.rkjtl, 0)
+        from (<include refid="leftTable"/>) a
+        left join (<include refid="rightTable"/>) b
+        on a.rn = b.rn
+        order by a.rn
+    </select>
+
+
+    <sql id="queryWhere">
+        <if test="carType != null">
+            and cartype = #{carType,jdbcType=DECIMAL}
+        </if>
+    </sql>
+
+    <sql id="rateLeftTable">
+        <if test="interval == &quot;y&quot; ">
+            select
+            a.rn,nvl(b.rkjtl,0) as rkjtl
+            from
+            (SELECT rownum rn FROM DUAL CONNECT BY rownum <![CDATA[ <= ]]> 12) a
+            left join
+            (select to_number(to_char(t.month, 'mm')) as rn, sum(t.rkjtl) as rkjtl
+            from sa_qsgsrkjtl t
+            where 1=1
+            <include refid="queryWhere"/>
+            and to_char(t.month, 'yyyy')=#{date,jdbcType=VARCHAR}
+            group by to_number(to_char(t.month, 'mm'))) b
+            on a.rn=b.rn
+            order by a.rn
+        </if>
+        <if test="interval == &quot;m&quot; ">
+            select a.rn, nvl(b.rkjtl, 0) as rkjtl
+            from (SELECT rownum rn
+            FROM DUAL
+            CONNECT BY rownum <![CDATA[ <= ]]> (select add_months(to_date(#{date,jdbcType=VARCHAR}, 'YYYYMM'), 1) -
+            to_date(#{date,jdbcType=VARCHAR}, 'YYYYMM')
+            from dual)) a
+            left join (select to_char(month, 'dd') as rn, sum(rkjtl) as rkjtl
+            from sa_qsgsrkjtl
+            where to_char(month, 'yyyyMM') = #{date,jdbcType=VARCHAR}
+            <include refid="queryWhere"/>
+            group by to_char(month, 'dd')
+            order by to_char(month, 'dd')) b
+            on a.rn = b.rn
+            order by a.rn
+        </if>
+    </sql>
+
+    <sql id="rateRightTable">
+        <if test="interval == &quot;y&quot; ">
+            select nvl(SUM(b.rkjtl),0) as rkjtl,a.rn
+            from (SELECT TO_CHAR(ADD_MONTHS(TO_DATE((TO_NUMBER(#{date,jdbcType=VARCHAR})-1)||'12', 'yyyyMM'), ROWNUM - 1),
+            'yyyyMM') as monthlist,
+            rownum rn
+            FROM DUAL
+            CONNECT BY ROWNUM <![CDATA[ <= ]]>
+            months_between(to_date(#{date,jdbcType=VARCHAR}||'11', 'yyyyMM'),
+            to_date((TO_NUMBER(#{date,jdbcType=VARCHAR})-1)||'12', 'yyyyMM')) + 1) a
+            left join (select nvl(rkjtl,0) as rkjtl,to_char(month,'yyyyMM') AS MONTH from sa_qsgsrkjtl
+            where 1=1
+            <include refid="queryWhere"/> ) b
+            on to_date(a.monthlist,'yyyyMM')=to_date(b.month,'yyyyMM')
+            group by a.monthlist,a.rn
+        </if>
+        <if test="interval == &quot;m&quot; ">
+            select
+            a.rn,nvl(b.rkjtl,0)as rkjtl
+            from (
+            SELECT TO_CHAR(TO_DATE(to_char(to_date(#{date,jdbcType=VARCHAR}||'01','yyyyMMdd')-1,'yyyyMMdd'), 'yyyyMMdd') + ROWNUM - 1, 'yyyyMMdd') as daylist,
+            rownum rn
+            FROM DUAL
+            CONNECT BY ROWNUM <![CDATA[ <= ]]>
+            trunc(to_date(#{date,jdbcType=VARCHAR}||to_number(to_char(last_day(to_date(#{date,jdbcType=VARCHAR},'yyyymm')),'dd'))-1, 'yyyyMMdd') -
+            to_date(to_char(to_date(#{date,jdbcType=VARCHAR}||'01','yyyyMMdd')-1,'yyyyMMdd'), 'yyyyMMdd')) + 1
+            )a
+
+            left join(
+            select to_char(month,'yyyyMMdd') as month,nvl(sum(rkjtl),0) as rkjtl from sa_qsgsrkjtl where 1=1
+            <include refid="queryWhere"/>
+            group by month
+            ) b
+            on a.daylist=b.month
+        </if>
+    </sql>
+    <!--
+    <select id="getRingRateByDate" parameterType="map" resultType="int" >
+      SELECT
+        CASE
+        when B.rkjtl = 0 THEN 0
+        ELSE round(((A.rkjtl-B.rkjtl)/B.rkjtl), 2)*100
+        END as hb
+      FROM
+        (<include refid="rateLeftTable"/>) A
+      left join (<include refid="rateRightTable"/>) B
+      ON A.rn=B.rn
+    </select>
+    -->
+
+    <sql id="groupColumn">
+        <if test="interval == &quot;m&quot;">
+            to_char(month,'dd')
+        </if>
+        <if test="interval == &quot;y&quot;">
+            to_char(month,'mm')
+        </if>
+    </sql>
+    <sql id="queryWhereRate">
+        <if test="interval == &quot;m&quot;">
+            to_char(month, 'yyyyMM') = #{date}
+        </if>
+        <if test="interval == &quot;y&quot;">
+            to_char(month,'yyyy') = #{date}
+        </if>
+    </sql>
+
+    <sql id="rateCurrent">
+        select a.rn, nvl(b.rkjtl, 0) as rkjtl
+        from (<include refid="leftTable"/>) a
+        left join (select <include refid="groupColumn"/> as rn, sum(rkjtl) as rkjtl
+        from sa_qsgsrkjtl
+        where <include refid="queryWhereRate"/>
+        <include refid="queryWhere"/>
+        group by <include refid="groupColumn"/>
+        order by <include refid="groupColumn"/>) b
+        on a.rn = b.rn
+        order by a.rn
+    </sql>
+    <sql id="groupColumnLast">
+        <if test="interval == &quot;m&quot;">
+            case
+            when (trunc(month,'dd')) = trunc(to_date(${date}, 'yyyymm') - 1,'dd') then
+            1
+            else
+            to_number(to_char(month + 1, 'dd'))
+            end
+        </if>
+        <if test="interval == &quot;y&quot;">
+            case
+            when to_char(month, 'mm') = '12' then
+            1
+            else
+            to_number(to_char(month, 'mm')) + 1
+            end
+        </if>
+    </sql>
+    <sql id="queryWhereRateLast">
+        <if test="interval == &quot;m&quot;">
+            month between to_date(#{date}, 'yyyymm') - 1 and
+            last_day(to_date(#{date}, 'yyyymm')) - 1
+        </if>
+        <if test="interval == &quot;y&quot;">
+            month between to_date(to_char(to_number(${date})-1) || '12', 'yyyymm') and
+            to_date(${date}|| '11', 'yyyymm')
+        </if>
+    </sql>
+    <sql id="rateLast">
+        select a.rn, nvl(b.rkjtl, 0) as rkjtl
+        from (<include refid="leftTable"/>) a
+        left join (select (<include refid="groupColumnLast"/>) as rn,
+        sum(rkjtl) as rkjtl
+        from sa_qsgsrkjtl
+        where <include refid="queryWhereRateLast"/>
+        <include refid="queryWhere"/>
+        group by (<include refid="groupColumnLast"/>)) b
+        on a.rn = b.rn
+        order by a.rn
+    </sql>
+    <select id="getRingRateByDate" parameterType="map" resultType="int" >
+        select case
+        when lst.rkjtl = 0 then
+        0
+        else
+        round(((curr.rkjtl - lst.rkjtl) / lst.rkjtl), 2) * 100
+        end as hb
+        from (
+        <include refid="rateCurrent"/>
+        ) curr
+        left join (<include refid="rateLast"/>) lst
+        on curr.rn = lst.rn
+    </select>
+    <select id="getExportTrifficFlow" parameterType="java.util.Map" resultType="java.util.HashMap">
+      select b.LXBM,b.GCZMC, a.JTL
+      from (select t.GUANCZBS, sum(t.JTL) as jtl
+              from V_GL_JKY_JDDATA_GS t
+              where to_date(t.GCRQ,'yyyy-mm-dd') between #{startDate,jdbcType=DATE} and #{endDate,jdbcType=DATE}
+             group by t.GUANCZBS) a
+      left join V_GL_JKY_JDZ_AUTO b
+        on a.GUANCZBS = b.GCZBS
+     order by a.jtl desc
+    </select>
+</mapper>

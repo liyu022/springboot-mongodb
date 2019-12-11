@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hdsx.lwgl.statanalysis.mapper141.TrifficSectionMapper">
+
+    <select id="getTrafficSection" parameterType="hashmap" resultType="hashmap">
+      select
+        ldmc as "ldmc",
+        sum(case when cartype = 1 then jtl else 0 end) as "kcjtl",
+        sum(case when cartype = 2 then jtl else 0 end) as "hcjtl"
+      from SA_GSRJDMZRJTL
+      where 1=1
+        <if test="carType==1 or carType==2">
+            and cartype = #{carType,jdbcType=DECIMAL}
+        </if>
+        <if test="carType==0">
+            and (cartype = 1 or cartype = 2)
+        </if>
+        <if test="interval == &quot;m&quot;">
+            and to_char(month, 'yyyymm') = #{date,jdbcType=VARCHAR}
+        </if>
+        <if test="interval == &quot;y&quot;">
+            and to_char(month, 'yyyy') = #{date,jdbcType=VARCHAR}
+        </if>
+      group by ldmc
+      having ldmc is not null
+    </select>
+</mapper>

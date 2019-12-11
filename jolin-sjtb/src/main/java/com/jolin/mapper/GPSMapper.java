@@ -1,5 +1,6 @@
 package com.jolin.mapper;
 import com.jolin.entity.GPSEntity;
+import com.jolin.entity.OutCarEntity;
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.Date;
@@ -16,4 +17,10 @@ public interface GPSMapper {
     Date GetGPSMaxTime();
 
     List<GPSEntity> GetGPSListByDate(Map<String, Date> map);
+
+    Date outGetGPSMaxTime();
+
+    List<OutCarEntity> outGetGPSList();
+
+    List<OutCarEntity> OutGetGPSListByDate(Map<String, Object> map);
 }

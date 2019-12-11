@@ -1,0 +1,375 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hdsx.lwgl.statanalysis.mapper141.ZhQueryMapper">
+
+    <sql id="leftTable">
+        <if test="interval == &quot;y&quot; ">
+            SELECT rownum rn FROM DUAL CONNECT BY rownum <![CDATA[ <= ]]> 12
+        </if>
+        <if test="interval == &quot;m&quot; ">
+            SELECT rownum rn FROM DUAL CONNECT BY rownum <![CDATA[ <= ]]> (select add_months(to_date(#{date,jdbcType=VARCHAR}, 'YYYY-MM'), 1) -
+            to_date(#{date,jdbcType=VARCHAR}, 'YYYY-MM')
+            from dual)
+        </if>
+    </sql>
+    <!-- 通过条件查询路政执法车辆信息 -->
+    <select id="getPageLzzfAllDate" parameterType="java.util.Map" resultType="java.util.HashMap">
+    SELECT
+        ajbh,ajmc,cljd,ajclr,wfnr,to_char(wfsj,'yyyy-mm-dd hh24:mi:ss') wfsj,wfdd,ajcldd,(case ajlx when '1' then '一般' when '2' then '简易' when '3' then '非当场处理' else '其他' end) as ajlx,ajclzcph,to_char(ajclrq,'yyyy-mm-dd hh24:mi:ss') ajclrq,ajclyy,zfrszdw,zfjgmc,zxqk,zfrxm,zfrzjh,zfrxm1
+    FROM
+      V_GL_LZZC_LZZFAJ
+    WHERE 1=1
+        <if test="ajbh != null and ajbh != ''">
+            and ajbh like '%'||#{ajbh,jdbcType=VARCHAR}||'%'
+        </if>
+        <if test="ajmc != null and ajmc != ''">
+            and ajmc like '%'||#{ajmc,jdbcType=VARCHAR}||'%'
+        </if>
+        <if test="ajlx != null and ajlx != ''">
+          <if test='ajlx != "0"'>
+              and ajlx like '%'||#{ajlx,jdbcType=VARCHAR}||'%'
+          </if>
+        </if>
+        <if test="ajclzcph != null and ajclzcph != ''">
+            and ajclzcph like '%'||#{ajclzcph,jdbcType=VARCHAR}||'%'
+        </if>
+        <if test="zfjgmc != null and zfjgmc != ''">
+            and zfjgmc like '%'||#{zfjgmc,jdbcType=VARCHAR}||'%'
+        </if>
+        <if test="begintime != null and begintime != ''">
+            and ajclrq &gt;= to_date(#{begintime,jdbcType=VARCHAR},'yyyy-mm-dd hh24:mi:ss')
+        </if>
+        <if test="endtime != null and endtime != ''">
+            and ajclrq &lt;= to_date(#{endtime,jdbcType=VARCHAR},'yyyy-mm-dd hh24:mi:ss')
+        </if>
+    ORDER BY
+        ajclrq
+  </select>
+    <!-- 通过条件查询治超处罚车辆信息 -->
+    <select id="getPagezccfAllDate" parameterType="java.util.Map" resultType="java.util.HashMap">
+    SELECT
+        chepaihao,daoluyunzh,zhifayiju,(case anyou when '1' then '违法超限运输' when '2' then '扰乱超限检测秩序' when '3' then '非法使用通行证' when '4' then '逃避超限检测' else '其他' end) as anyou,chengyunrenaddress,chengyunren,shifoufeifagaizhang,gaizhuangshuom,shifoubiaozhunche,feibiaozhuncheshuom,jiashizheng,congyezigezheng,farendaibiao,farenidcard,sijixingm,sijidianhua,huozhuxingm,huozhufaren,huowudaima,huowumingc,zhuanghuodizhi,chufadi,mudidi,shifouxianhuopin,jiancedanhao,chufadanhao,chufashuhao,to_char(chufariqi,'yyyy-mm-dd hh24:mi:ss')chufariqi,chufajine,peichangjine,zhifaren,zfrzjh
+    FROM
+     V_GL_LZZC_LZZCXXB
+    WHERE 1=1
+        <if test="chepaihao != null and chepaihao != ''">
+            and chepaihao like '%'||#{chepaihao,jdbcType=VARCHAR}||'%'
+        </if>
+        <if test="daoluyunzh != null and daoluyunzh != ''">
+            and daoluyunzh like '%'||#{daoluyunzh,jdbcType=VARCHAR}||'%'
+        </if>
+        <if test="anyou != null and anyou != ''">
+            <if test='anyou != "0"'>
+                and anyou like '%'||#{anyou,jdbcType=VARCHAR}||'%'
+            </if>
+        </if>
+        <if test="huowumingc != null and huowumingc != ''">
+            and huowumingc like '%'||#{huowumingc,jdbcType=VARCHAR}||'%'
+        </if>
+        <if test="chufashuhao != null and chufashuhao != ''">
+            and chufashuhao like '%'||#{chufashuhao,jdbcType=VARCHAR}||'%'
+        </if>
+        <if test="begintime != null and begintime != ''">
+            and chufariqi &gt;= to_date(#{begintime,jdbcType=VARCHAR},'yyyy-mm-dd hh24:mi:ss')
+        </if>
+        <if test="endtime != null and endtime != ''">
+            and chufariqi &lt;= to_date(#{endtime,jdbcType=VARCHAR},'yyyy-mm-dd hh24:mi:ss')
+        </if>
+    ORDER BY
+        chufariqi
+    </select>
+    <select id="getTimeList" parameterType="hashmap" resultType="int">
+        <include refid="leftTable"/>
+    </select>
+
+    <select id="getRingRateByDate" parameterType="map" resultType="int" >
+        <if test="interval == &quot;y&quot; ">
+            select case
+            when a.carnum = 0 then 0 else round(((b.carnum - a.carnum) / a.carnum), 2) * 100 end as hb
+            from (
+            <include refid="rateBeforeYear"/>
+            ) a
+            left join (<include refid="rateCurrentYear"/>) b
+            on a.month = b.month
+        </if>
+        <if test="interval == &quot;m&quot; ">
+            select case
+            when a.carnum = 0 then 0 else round(((b.carnum - a.carnum) / a.carnum), 2) * 100 end as hb
+            from (<include refid="rateBeforeMonth"/>) a
+            left join (<include refid="rateCurrentMonth"/>) b
+            on a.day = b.day
+        </if>
+    </select>
+
+    <select id="getLawEngorcementCaseStatistics" parameterType="hashmap" resultType="int">
+        <if test="interval == &quot;y&quot; ">
+            select carnum from (
+             <include refid="rateCurrentYear"/>
+            )
+        </if>
+        <if test="interval == &quot;m&quot; ">
+            select carnum from (
+             <include refid="rateCurrentMonth"/>
+            )
+        </if>
+    </select>
+    <sql id="rateCurrentYear">
+        select a.rn month,nvl(b.carnum,0)carnum
+        from (
+        SELECT rownum rn
+        FROM DUAL CONNECT BY rownum <![CDATA[ <= ]]> 12) a
+        left join (
+        select to_number(to_char(ajclrq, 'mm')) yeardate,count(1) carnum
+        from v_Gl_Lzzc_Lzzfaj
+        where 1=1
+        <if test="caseType != null and caseType != ''">
+            <if test='caseType != "0"'>
+                and ajlx = #{caseType,jdbcType=VARCHAR}
+            </if>
+        </if>
+        and to_char(ajclrq, 'yyyy') = #{date,jdbcType=VARCHAR}
+        group by to_char(ajclrq, 'mm')order by yeardate) b
+        on a.rn = b.yeardate order by rn
+    </sql>
+    <sql id="rateCurrentMonth">
+        select a.rn day,nvl(b.carnum,0)carnum from (
+        SELECT rownum rn
+        FROM DUAL CONNECT BY rownum <![CDATA[ <= ]]> (
+        select add_months(to_date(#{date,jdbcType=VARCHAR}, 'YYYY-MM'), 1) - to_date(#{date,jdbcType=VARCHAR}, 'YYYY-MM')
+        from dual))a
+        left join (
+        select to_number(to_char(ajclrq, 'dd')) yeardate,count(1) carnum
+        from v_Gl_Lzzc_Lzzfaj
+        where 1=1
+        <if test="caseType != null and caseType != ''">
+            <if test='caseType != "0"'>
+                and ajlx = #{caseType,jdbcType=VARCHAR}
+            </if>
+        </if>
+        and to_char(ajclrq, 'yyyy-mm') = #{date,jdbcType=VARCHAR}
+        group by to_char(ajclrq, 'dd') order by yeardate)b
+        on a.rn = b.yeardate order by rn
+    </sql>
+    <sql id="rateBeforeYear">
+        select a.rn month,nvl(b.carnum,0)carnum
+        from (
+        SELECT rownum rn
+        FROM DUAL CONNECT BY rownum <![CDATA[ <= ]]> 12) a
+        left join (
+        select to_number(to_char(add_months(ajclrq,1),'mm')) yeardate,count(1)carnum
+        from v_Gl_Lzzc_Lzzfaj
+        where 1=1
+        <if test="caseType != null and caseType != ''">
+            <if test='caseType != "0"'>
+                and ajlx = #{caseType,jdbcType=VARCHAR}
+            </if>
+        </if>
+        and to_char(add_months(ajclrq,1),'yyyy') = #{date,jdbcType=VARCHAR}
+        group by to_char(add_months(ajclrq,1),'mm')order by yeardate) b
+        on a.rn = b.yeardate order by rn
+    </sql>
+    <sql id="rateBeforeMonth">
+        select a.rn day,nvl(b.carnum,0)carnum from (
+        SELECT rownum rn
+        FROM DUAL CONNECT BY rownum <![CDATA[ <= ]]> (
+        select add_months(to_date(#{date,jdbcType=VARCHAR}, 'YYYY-MM'), 1) - to_date(#{date,jdbcType=VARCHAR}, 'YYYY-MM')
+        from dual))a
+        left join (
+        select to_number(to_char(ajclrq+1, 'dd')) yeardate,count(1) carnum
+        from v_Gl_Lzzc_Lzzfaj
+        where 1=1
+        <if test="caseType != null and caseType != ''">
+            <if test='caseType != "0"'>
+                and ajlx = #{caseType,jdbcType=VARCHAR}
+            </if>
+        </if>
+        and to_char(ajclrq+1, 'yyyy-mm') = #{date,jdbcType=VARCHAR}
+        group by to_char(ajclrq+1, 'dd') order by yeardate)b
+        on a.rn = b.yeardate order by rn
+    </sql>
+
+    <select id="getLegendList" resultType="String">
+        select regexp_substr('西安市,铜川市,宝鸡市,咸阳市,渭南市,汉中市,安康市,商洛市,延安市,榆林市,其他','[^,]+',1,LEVEL) as name from dual CONNECT BY  LEVEL  <![CDATA[ < ]]> 12
+    </select>
+
+    <select id="getBarDateList" parameterType="hashmap" resultType="hashmap">
+
+        <if test="interval == &quot;y&quot; ">
+            select b.value as "value",a.name as "name" from (
+            select regexp_substr('西安市,铜川市,宝鸡市,咸阳市,渭南市,汉中市,安康市,商洛市,延安市,榆林市,其他','[^,]+',1,LEVEL) as name,LEVEL as xh from dual CONNECT BY  LEVEL  <![CDATA[ < ]]> 12)a
+            left join (
+            select sum(b.carnum) as value,b.city as name from (
+            select a.carnum,case a.ajclzcph
+            when '陕A' then '西安市'
+            when '陕B' then '铜川市'
+            when '陕C' then '宝鸡市'
+            when '陕D' then '咸阳市'
+            when '陕E' then '渭南市'
+            when '陕F' then '汉中市'
+            when '陕G' then '安康市'
+            when '陕H' then '商洛市'
+            when '陕J' then '延安市'
+            when '陕K' then '榆林市'
+            else '其他' end as city
+            from (
+            select substr(ajclzcph, 0, 2)ajclzcph,count(1)carnum
+            from v_Gl_Lzzc_Lzzfaj where to_char(ajclrq, 'yyyy') = #{date,jdbcType=VARCHAR} group by substr(ajclzcph, 0, 2) order by ajclzcph )a)b
+            group by b.city
+            )b on a.name = b.name order by xh
+        </if>
+        <if test="interval == &quot;m&quot; ">
+            select b.value as "value",a.name as "name" from (
+            select regexp_substr('西安市,铜川市,宝鸡市,咸阳市,渭南市,汉中市,安康市,商洛市,延安市,榆林市,其他','[^,]+',1,LEVEL) as name,LEVEL as xh from dual CONNECT BY  LEVEL  <![CDATA[ < ]]> 12)a
+            left join (
+            select sum(b.carnum) as value,b.city as name from (
+            select a.carnum,case a.ajclzcph
+            when '陕A' then '西安市'
+            when '陕B' then '铜川市'
+            when '陕C' then '宝鸡市'
+            when '陕D' then '咸阳市'
+            when '陕E' then '渭南市'
+            when '陕F' then '汉中市'
+            when '陕G' then '安康市'
+            when '陕H' then '商洛市'
+            when '陕J' then '延安市'
+            when '陕K' then '榆林市'
+            else '其他' end as city
+            from (
+            select substr(ajclzcph, 0, 2)ajclzcph,count(1)carnum
+            from v_Gl_Lzzc_Lzzfaj where to_char(ajclrq, 'yyyy-mm') = #{date,jdbcType=VARCHAR} group by substr(ajclzcph, 0, 2) order by ajclzcph )a)b
+            group by b.city
+            )b on a.name = b.name order by xh
+        </if>
+    </select>
+
+    <select id="getOverRunPunishCaseStatistics" parameterType="hashmap" resultType="int">
+        <if test="interval == &quot;y&quot; ">
+            select carnum from (
+              <include refid="zcRateCurrentYear"/>
+            )
+        </if>
+        <if test="interval == &quot;m&quot; ">
+            select carnum from (
+              <include refid="zcRateCurrentMonth"/>
+            )
+        </if>
+    </select>
+    <sql id="zcRateCurrentYear">
+        select a.rn month,nvl(b.carnum,0)carnum
+        from (
+        SELECT rownum rn
+        FROM DUAL CONNECT BY rownum <![CDATA[ <= ]]> 12) a
+        left join (
+        select to_number(to_char(chufariqi, 'mm')) yeardate,count(1) carnum
+        from v_gl_lzzc_lzzcxxb
+        where 1=1
+        <if test="caseType != null and caseType != ''">
+            <if test='caseType != "0"'>
+                and anyou = #{caseType,jdbcType=VARCHAR}
+            </if>
+        </if>
+        and to_char(chufariqi, 'yyyy') = #{date,jdbcType=VARCHAR}
+        group by to_char(chufariqi, 'mm')order by yeardate) b
+        on a.rn = b.yeardate order by rn
+    </sql>
+    <sql id="zcRateCurrentMonth">
+        select a.rn day,nvl(b.carnum,0)carnum from (
+        SELECT rownum rn
+        FROM DUAL CONNECT BY rownum <![CDATA[ <= ]]> (
+        select add_months(to_date(#{date,jdbcType=VARCHAR}, 'YYYY-MM'), 1) - to_date(#{date,jdbcType=VARCHAR}, 'YYYY-MM')
+        from dual))a
+        left join (
+        select to_number(to_char(chufariqi, 'dd')) yeardate,count(1) carnum
+        from v_gl_lzzc_lzzcxxb
+        where 1=1
+        <if test="caseType != null and caseType != ''">
+            <if test='caseType != "0"'>
+                and anyou = #{caseType,jdbcType=VARCHAR}
+            </if>
+        </if>
+        and to_char(chufariqi, 'yyyy-mm') = #{date,jdbcType=VARCHAR}
+        group by to_char(chufariqi, 'dd') order by yeardate)b
+        on a.rn = b.yeardate order by rn
+    </sql>
+    <sql id="zcRateBeforeYear">
+        select a.rn month,nvl(b.carnum,0)carnum
+        from (
+        SELECT rownum rn
+        FROM DUAL CONNECT BY rownum <![CDATA[ <= ]]> 12) a
+        left join (
+        select to_number(to_char(add_months(chufariqi,1),'mm')) yeardate,count(1)carnum
+        from v_gl_lzzc_lzzcxxb
+        where 1=1
+        <if test="caseType != null and caseType != ''">
+            <if test='caseType != "0"'>
+                and anyou = #{caseType,jdbcType=VARCHAR}
+            </if>
+        </if>
+        and to_char(add_months(chufariqi,1),'yyyy') = #{date,jdbcType=VARCHAR}
+        group by to_char(add_months(chufariqi,1),'mm')order by yeardate) b
+        on a.rn = b.yeardate order by rn
+    </sql>
+    <sql id="zcRateBeforeMonth">
+        select a.rn day,nvl(b.carnum,0)carnum from (
+        SELECT rownum rn
+        FROM DUAL CONNECT BY rownum <![CDATA[ <= ]]> (
+        select add_months(to_date(#{date,jdbcType=VARCHAR}, 'YYYY-MM'), 1) - to_date(#{date,jdbcType=VARCHAR}, 'YYYY-MM')
+        from dual))a
+        left join (
+        select to_number(to_char(chufariqi+1, 'dd')) yeardate,count(1) carnum
+        from v_gl_lzzc_lzzcxxb
+        where 1=1
+        <if test="caseType != null and caseType != ''">
+            <if test='caseType != "0"'>
+                and anyou = #{caseType,jdbcType=VARCHAR}
+            </if>
+        </if>
+        and to_char(chufariqi+1, 'yyyy-mm') = #{date,jdbcType=VARCHAR}
+        group by to_char(chufariqi+1, 'dd') order by yeardate)b
+        on a.rn = b.yeardate order by rn
+    </sql>
+
+    <select id="getZCRingRateByDate" parameterType="map" resultType="int" >
+        <if test="interval == &quot;y&quot; ">
+            select case
+            when a.carnum = 0 then 0 else round(((b.carnum - a.carnum) / a.carnum), 2) * 100 end as hb
+            from (
+            <include refid="zcRateBeforeYear"/>
+            ) a
+            left join (<include refid="zcRateCurrentYear"/>) b
+            on a.month = b.month
+        </if>
+        <if test="interval == &quot;m&quot; ">
+            select case
+            when a.carnum = 0 then 0 else round(((b.carnum - a.carnum) / a.carnum), 2) * 100 end as hb
+            from (<include refid="zcRateBeforeMonth"/>) a
+            left join (<include refid="zcRateCurrentMonth"/>) b
+            on a.day = b.day
+        </if>
+    </select>
+
+    <select id="getZCLegendList" resultType="String">
+        select huowutype from t_gl_lzzc_lzzcxxb_rel group by huowutype,huowucode order by huowucode
+    </select>
+
+    <select id="getZCBarDateList" parameterType="hashmap" resultType="hashmap">
+        <if test="interval == &quot;y&quot; ">
+            select sum(carnum) as "value",huowutype as "name" from (
+            select a.huowumingc,a.huowutype,a.huowucode,b.name,b.carnum
+            from t_gl_lzzc_lzzcxxb_rel a left join(
+            select replace(huowumingc,' ','') name,count(1) carnum from v_gl_lzzc_lzzcxxb where to_char(chufariqi, 'yyyy') = #{date,jdbcType=VARCHAR} group by replace(huowumingc,' ',''))b
+            on a.huowumingc = b.name order by a.huowucode) group by huowutype,huowucode order by huowucode
+        </if>
+        <if test="interval == &quot;m&quot; ">
+            select sum(carnum) as "value",huowutype as "name" from (
+            select a.huowumingc,a.huowutype,a.huowucode,b.name,b.carnum
+            from t_gl_lzzc_lzzcxxb_rel a left join(
+            select replace(huowumingc,' ','') name,count(1) carnum from v_gl_lzzc_lzzcxxb where to_char(chufariqi, 'yyyy-mm') = #{date,jdbcType=VARCHAR} group by replace(huowumingc,' ',''))b
+            on a.huowumingc = b.name order by a.huowucode) group by huowutype,huowucode order by huowucode
+        </if>
+    </select>
+
+    <select id="selectAllList" parameterType="hashmap" resultType="hashmap">
+
+    </select>
+</mapper>

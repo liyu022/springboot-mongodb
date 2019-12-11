@@ -8,6 +8,7 @@
     <version>0.0.1-SNAPSHOT</version>
     <modules>
         <module>jolin-sjtb</module>
+        <module>jolin-tjfx</module>
     </modules>
     <packaging>pom</packaging>
 
@@ -109,7 +110,6 @@
     </dependencyManagement>
 
     <build>
-        <finalName>api-manage</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>

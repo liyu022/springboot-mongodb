@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
-<mapper namespace="com.hdsx.lwgl.sjtb.mapper.GPSMapper" >
-    <resultMap id="BaseResultMap" type="com.hdsx.lwgl.sjtb.entity.VEHICLE_GPS" >
+<mapper namespace="com.jolin.mapper.GPSMapper" >
+    <resultMap id="BaseResultMap" type="com.jolin.entity.VEHICLE_GPS" >
         <id column="PLATE_NUMBERS" property="plateNumbers" jdbcType="VARCHAR" />
         <result column="ID" property="id" jdbcType="DECIMAL" />
         <result column="LON" property="lon" jdbcType="DECIMAL" />
@@ -20,6 +20,21 @@
         <result column="CARTYPE" property="cartype" jdbcType="DECIMAL" />
     </resultMap>
 
+    <resultMap id="OutCarResultMap" type="com.jolin.entity.OutCarEntity" >
+        <id column="carnum" property="carnum" jdbcType="VARCHAR" />
+        <result column="CARCOLOR" property="carcolor" jdbcType="VARCHAR" />
+        <result column="TIMESTAMPSTR" property="timestampstr" jdbcType="DATE" />
+        <result column="LON" property="lon" jdbcType="DECIMAL" />
+        <result column="LAT" property="lat" jdbcType="DECIMAL" />
+        <result column="VEC1" property="vec1" jdbcType="DECIMAL" />
+        <result column="VEC2" property="vec2" jdbcType="DECIMAL" />
+        <result column="VEC3" property="vec3" jdbcType="DECIMAL" />
+        <result column="DIRECTION" property="direction" jdbcType="DECIMAL" />
+        <result column="ALTITUDE" property="altitude" jdbcType="DECIMAL" />
+        <result column="STATE" property="state" jdbcType="DECIMAL" />
+        <result column="ALARM" property="alarm" jdbcType="DECIMAL" />
+    </resultMap>
+
     <sql id="Base_Column_List" >
     PLATE_NUMBERS, ID, LON, LAT, SPEED1, DIRECTION, 'Point ('||g.lon||' '||g.lat||')' AS GEOMETRY, AS GEOMETRY, MILEAGE, ALTITUDE, STATE,
     ALARM, GPSTIME, ADDTIME, SPEED2, LDDM, CARTYPE
@@ -28,12 +43,14 @@
     <select id="GetGPSMaxTime" resultType="java.util.Date">
       select max(t.UPDATE_TIME) from V_GPS t
     </select>
-
-    <resultMap id="FeatureResultMapFull" type="com.hdsx.lwgl.sjtb.entity.GPSEntity" >
+    <select id="outGetGPSMaxTime" resultType="java.util.Date">
+       select max(t.timestampstr) from T_DY_GPS_SN t
+    </select>
+    <resultMap id="FeatureResultMapFull" type="com.jolin.entity.GPSEntity" >
         <id column="locationId" property="locationId" jdbcType="VARCHAR" />
         <result column="GEOMETRY" property="geometry" jdbcType="VARCHAR" />
         <result column="GEOMETRYTYPE" property="geometryType" jdbcType="VARCHAR" />
-        <association property="attributes" javaType="com.hdsx.lwgl.sjtb.entity.FeatureGpsAttribute">
+        <association property="attributes" javaType="com.jolin.entity.FeatureGpsAttribute">
             <id column="PLATE_NUMBERS" property="id" jdbcType="VARCHAR" />
             <result column="LON" property="lon" jdbcType="DECIMAL" />
             <result column="LAT" property="lat" jdbcType="DECIMAL" />
@@ -55,9 +72,9 @@
             <result column="certificateUnit" property="certificateUnit" jdbcType="VARCHAR" />
             <result column="carType" property="carType" jdbcType="DECIMAL"/>
         </association>
-        <association property="location" javaType="com.hdsx.lwgl.sjtb.entity.GeoJsonPoint">
+        <association property="location" javaType="com.jolin.entity.GeoJsonPoint">
             <result column="type" property="type" jdbcType="VARCHAR" />
-            <result column="coordinates" property="coordinates" typeHandler="com.hdsx.lwgl.sjtb.util.JsonBigDecimalArrayTypeHandler"/>
+            <result column="coordinates" property="coordinates" typeHandler="com.jolin.util.JsonBigDecimalArrayTypeHandler"/>
         </association>
     </resultMap>
 
@@ -128,8 +145,25 @@
         </if>
     </select>
 
+    <!--  查询行驶在指定路线的车辆信息 -->
+    <select id="outGetGPSList" parameterType="java.util.Map" resultMap="OutCarResultMap">
+         select CARNUM,CARCOLOR,TIMESTAMPSTR,LON,LAT,VEC1,VEC2,VEC3,DIRECTION,ALTITUDE,STATE,ALARM
+         from T_DY_GPS_SN
+         Where 1=1 AND lon>0 AND  lat>0
+    </select>
 
-
+    <!--  查询时间段内的数据 -->
+    <select id="OutGetGPSListByDate" parameterType="java.util.Map" resultMap="OutCarResultMap">
+        select * from (select ROWNUM AS rowno,carnum,carcolor,timestampstr,lon,lat,vec1,vec2,vec3,direction,altitude,state,alarm
+        from T_DY_GPS_SN
+        Where 1=1 AND lon>0 AND  lat>0
+        <if test="mongodbmaxtime != null and oraclemaxtime != null" >
+            AND (timestampstr <![CDATA[ > ]]> #{mongodbmaxtime,jdbcType=TIMESTAMP} and timestampstr <![CDATA[ <= ]]>
+            #{oraclemaxtime,jdbcType=TIMESTAMP})
+        </if>
+        AND ROWNUM <![CDATA[ <= ]]> #{endnumber,jdbcType=INTEGER}) tem
+        WHERE tem.rowno <![CDATA[ > ]]> #{beginnumber,jdbcType=INTEGER}
+    </select>
 
 
 </mapper>

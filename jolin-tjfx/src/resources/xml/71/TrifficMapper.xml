@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hdsx.lwgl.statanalysis.mapper71.TrifficMapper">
+
+    <select id="getTriffic" parameterType="java.util.Map" resultType="map">
+       select t.lxmc as "lxmc",t.lxbm as "lxbm",t.len as "len", g.lc as "lc"
+        from (SELECT lxmc,
+               lxbm,
+               round(sum(len), 3) as len
+          FROM V_TRAFFIC_CURRENT
+        where 1=1
+        <if test="xzqh != null">
+            and xzqhbm like #{xzqh, jdbcType=VARCHAR}||'%'
+        </if>
+         group by lxmc, lxbm) t
+      left join GISDB.V_LXDM_LC g
+      on t.lxbm = g.lxdm
+      order by t.len desc
+    </select>
+
+    <select id="getHeatTriffic" parameterType="java.util.Map" resultType="map">
+        select lxbm||'_'||rownum as "name", ptx as "ptx",pty as "pty", len as "value" from V_TRAFFIC_CURRENT
+        where 1=1
+        <if test="xzqh != null">
+            and xzqhbm like #{xzqh, jdbcType=VARCHAR}||'%'
+        </if>
+    </select>
+
+    <select id="getHisTriffic" parameterType="hashmap" resultType="map">
+       select lxmc, lxbm, round(sum(len), 3) as len, count(*) cnt
+          from TRAFFIC_HISTORY t
+         where t.sjsj between #{startDate,jdbcType=DATE} and
+               #{endDate,jdbcType=DATE}
+         group by lxmc, lxbm
+         order by len desc
+    </select>
+    <select id="getExportTriffic" parameterType="java.util.Map" resultType="java.util.HashMap">
+        select lxmc, lxbm, round(sum(len), 3) as len, count(*) cnt
+        from TRAFFIC_HISTORY t
+        where t.sjsj between #{startDate,jdbcType=DATE} and
+               #{endDate,jdbcType=DATE}
+         group by lxmc, lxbm
+         order by len desc
+    </select>
+    <select id="getTimeList" parameterType="hashmap" resultType="map">
+        select distinct t.sjsj
+          from TRAFFIC_HISTORY t
+         where t.sjsj between #{startDate,jdbcType=DATE} and
+                       #{endDate,jdbcType=DATE}
+         order by sjsj
+    </select>
+
+    <select id="getHisHeatTriffic" parameterType="hashmap" resultType="map">
+        select lxbm||'_'||rownum as "name", ptx as "ptx",pty as "pty", len as "value" from TRAFFIC_HISTORY where sjsj = #{sjsj,jdbcType=DATE}
+    </select>
+</mapper>

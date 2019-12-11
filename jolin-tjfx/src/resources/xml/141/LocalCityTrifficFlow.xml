@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hdsx.lwgl.statanalysis.mapper141.LocalCityTrifficFlowMapper">
+    <select id="getCityHighWayByYear" parameterType="hashmap" resultType="map">
+      select
+        a.name as "name",nvl(a.lon,0)as "lon",nvl(a.lat,0) as "lat",nvl(b.ckjtl, 0) as "ckjtl",nvl(b.rkjtl, 0) as "rkjtl"
+      from SA_XZQH_CENTER a
+      left join (select t.area || '00' as area,
+                <if test="direction == &quot;a&quot;">
+                    sum(t.ckjtl) as ckjtl,
+                    sum(t.rkjtl) as rkjtl
+                </if>
+                <if test="direction == &quot;c&quot;">
+                    sum(t.ckjtl) as ckjtl,
+                    0 as rkjtl
+                </if>
+                <if test="direction == &quot;r&quot;">
+                    0 as ckjtl,
+                    sum(t.rkjtl) as rkjtl
+                </if>
+               from SA_DSGSJTL t
+              where 1=1
+                <if test="interval == &quot;m&quot;">
+                    and to_char(t.month, 'yyyymm') = #{date}
+                </if>
+                <if test="interval == &quot;y&quot;">
+                    and to_char(t.month, 'yyyy') = #{date}
+                </if>
+
+              group by t.area) b
+      on a.code = b.area
+      where substr(code,3,4) <![CDATA[ <> ]]>  '0000'
+    </select>
+
+    <select id="getLocalCityInfo" parameterType="hashmap" resultType="hashmap">
+      select
+         code as "code",name as "name",lon as "lon", lat as "lat"
+      from
+        SA_XZQH_CENTER
+        where 1=1
+        <if test="level == &quot;p&quot;">
+            and substr(code,3,4) =  '0000'
+        </if>
+        <if test="interval == &quot;c&quot;">
+            and substr(code,3,4) <![CDATA[ <> ]]>  '0000'
+        </if>
+        order by code
+    </select>
+</mapper>

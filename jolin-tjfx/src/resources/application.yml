@@ -1,0 +1,127 @@
+server:
+  port: 8813
+  max-http-header-size: 10000000
+
+
+spring:
+  application:
+    name: lwgl-statanalysis
+  datasource:
+    orcl71:
+      url: jdbc:oracle:thin:@10.228.2.71:1521:sxgis
+#      url: jdbc:oracle:thin:@192.168.3.113:1521:orcl
+      username: TRAFFIC_SHANXI
+      password: TRAFFIC_SHANXI
+      driver-class-name: oracle.jdbc.driver.OracleDriver
+      type: com.alibaba.druid.pool.DruidDataSource
+      druid:
+        filters: stat,logging
+        initial-size: 8
+        min-idle: 3
+        max-active: 10
+        query-timeout: 6000
+        transaction-query-timeout: 6000
+        remove-abandoned-timeout: 1800
+        max-wait: 60000
+        time-between-eviction-runs-millis: 60000
+        min-evictable-idle-time-millis: 300000
+        test-while-idle:  true
+        test-on-borrow: false
+        test-on-return: false
+    orcl141:
+      url: jdbc:oracle:thin:@10.228.2.141:1521/orclpdb
+      username: SJZX_HD
+      password: SJZX_HD
+#      url: jdbc:oracle:thin:@192.168.3.113:1521:orcl
+#      username: GLYXGISDB
+#      password: GLYXGISDB
+      driver-class-name: oracle.jdbc.driver.OracleDriver
+      type: com.alibaba.druid.pool.DruidDataSource
+      druid:
+        filters: stat,logging
+        initial-size: 8
+        min-idle: 3
+        max-active: 10
+        query-timeout: 6000
+        transaction-query-timeout: 6000
+        remove-abandoned-timeout: 1800
+        max-wait: 60000
+        time-between-eviction-runs-millis: 60000
+        min-evictable-idle-time-millis: 300000
+        test-while-idle:  true
+        test-on-borrow: false
+        test-on-return: false
+    orcl184:
+      url: jdbc:oracle:thin:@10.228.2.184:1521/orclyj
+      username: SXGL_RTDB
+      password: SXGL_RTDB
+      driver-class-name: oracle.jdbc.driver.OracleDriver
+      type: com.alibaba.druid.pool.DruidDataSource
+      druid:
+        filters: stat,logging
+        initial-size: 8
+        min-idle: 3
+        max-active: 10
+        query-timeout: 6000
+        transaction-query-timeout: 6000
+        remove-abandoned-timeout: 1800
+        max-wait: 60000
+        time-between-eviction-runs-millis: 60000
+        min-evictable-idle-time-millis: 300000
+        test-while-idle:  true
+        test-on-borrow: false
+        test-on-return: false
+  data:
+    mongodb:
+      uri: mongodb://gisdb:gisdb@10.228.2.72:27017/gis
+cache:
+  ehcache:
+    config: classpath:/ehcache.xml
+
+eureka:
+  client:
+    serviceUrl:
+#      defaultZone: http://10.228.2.135:8761/eureka/
+      defaultZone: http://localhost:8761/eureka/
+    instance:
+      statusPageUrlPath: ${management.context-path}/info
+      healthCheckUrlPath: ${management.context-path}/health
+  logging:
+    level:
+      org.springframework.data.mongodb.core: DEBUG
+debug: true
+
+#pagehelper分页插件配置
+pagehelper:
+  helper-dialect: oracle
+  reasonable: true
+  support-methods-arguments: true
+  offset-as-page-num: true
+  row-bounds-with-count: true
+  params: count=countSql
+
+
+#配置日志
+logging:
+  #配置日志文件路径
+  level:
+    com:
+      hdsx:
+        lwgl:
+          statanalysis:
+            mapper141:  debug
+            mapper71: debug
+            mapper184: debug
+
+parames:
+  hyfx:
+    networkeffect:
+      meters: 5000
+      minPts: 5
+
+mapdata:
+  http:
+    url: 10.228.2.73:8080
+#    url: 192.168.3.24:7006
+    lxLayerName: GIS_LX_M
+    xzqhLayerName: GISGEO.区县级行政区划r

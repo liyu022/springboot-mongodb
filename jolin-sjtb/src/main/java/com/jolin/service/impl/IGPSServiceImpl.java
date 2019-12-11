@@ -1,8 +1,8 @@
 package com.jolin.service.impl;
-
-import com.hdsx.lwgl.sjtb.entity.GPSEntity;
-import com.hdsx.lwgl.sjtb.mapper.GPSMapper;
-import com.hdsx.lwgl.sjtb.service.IGPSService;
+import com.jolin.entity.GPSEntity;
+import com.jolin.entity.OutCarEntity;
+import com.jolin.mapper.GPSMapper;
+import com.jolin.service.IGPSService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -38,5 +38,25 @@ public class IGPSServiceImpl implements IGPSService {
         map.put("addtime",addtime);
         map.put("gpszx",gpszx);
         return gpsMapper.GetGPSListByDate(map);
+    }
+
+    @Override
+    public Date outGetGPSMaxTime() {
+        return gpsMapper.outGetGPSMaxTime();
+    }
+
+    @Override
+    public List<OutCarEntity> outGetGPSList() {
+        return gpsMapper.outGetGPSList();
+    }
+
+    @Override
+    public List<OutCarEntity> OurGetGPSListByDate(Date timestampstr, Date oracleCarMaxTime,int beginnumber,int endnumber) {
+        Map<String,Object> map = new HashMap();
+        map.put("mongodbmaxtime",timestampstr);
+        map.put("oraclemaxtime",oracleCarMaxTime);
+        map.put("beginnumber",beginnumber);
+        map.put("endnumber",endnumber);
+        return gpsMapper.OutGetGPSListByDate(map);
     }
 }

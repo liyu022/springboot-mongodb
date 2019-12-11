@@ -9,9 +9,9 @@ spring:
 #      jdbc-url: jdbc:oracle:thin:@10.228.2.184:1521/orclyj
 #      username: JTYJ_HD
 #      password: JTYJ_HD
-      jdbc-url: jdbc:oracle:thin:@127.0.0.1:1521/orcl
-      username: jolin
-      password: jolin
+      jdbc-url: jdbc:oracle:thin:@10.228.2.183:1521/sxgl_orclpdb
+      username: sxgl_ods
+      password: sxgl_ods_XxzX
       driver-class-name: oracle.jdbc.OracleDriver
       type: com.alibaba.druid.pool.DruidDataSource
   data:
@@ -26,7 +26,7 @@ logging:
     org.springframework.data.mongodb.core: DEBUG
 mybatis:
   mapperLocations: classpath:/xml/*.xml
-  typeAliasesPackage: com.hdsx.lwgl.sjtb.entity
+  typeAliasesPackage: com.jolin.entity
   config-location: classpath:mybatis-config.xml
 
 #pagehelper分页插件配置

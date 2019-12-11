@@ -7,7 +7,6 @@
         <groupId>com.jolin</groupId>
         <artifactId>lwgl</artifactId>
         <version>0.0.1-SNAPSHOT</version>
-        <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <artifactId>lwgl-sjtb</artifactId>
     <description>Demo project for Spring Boot</description>
@@ -85,6 +84,21 @@
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-nosql</artifactId>
             <version>2.9.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jfaster</groupId>
+            <artifactId>mango</artifactId>
+            <version>1.6.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.geotools</groupId>
+            <artifactId>gt-shapefile</artifactId>
+            <version>17.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.geotools</groupId>
+            <artifactId>gt-geojson</artifactId>
+            <version>17.1</version>
         </dependency>
     </dependencies>
 

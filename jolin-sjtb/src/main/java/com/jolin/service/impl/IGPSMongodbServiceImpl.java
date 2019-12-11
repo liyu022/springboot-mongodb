@@ -1,10 +1,8 @@
 package com.jolin.service.impl;
 
-import com.hdsx.lwgl.sjtb.entity.FeatureGpsAttribute;
-import com.hdsx.lwgl.sjtb.entity.GPSEntity;
-import com.hdsx.lwgl.sjtb.entity.GeoJsonPoint;
-import com.hdsx.lwgl.sjtb.service.IGPSMongodbService;
-import com.hdsx.lwgl.sjtb.util.DateConvert;
+import com.jolin.entity.*;
+import com.jolin.service.IGPSMongodbService;
+import com.jolin.util.DateConvert;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.model.DeleteOneModel;
 import com.mongodb.client.model.WriteModel;
@@ -153,6 +151,22 @@ public class IGPSMongodbServiceImpl implements IGPSMongodbService {
         BulkWriteResult bulkWriteResult = mongoTemplate.getCollection("GisFeature").bulkWrite(requests);
         System.out.println(bulkWriteResult.toString());
     }
+    @Override
+    public OutCarEntity outGetGPSMongodbMaxTime() {
+        Criteria criteria = new Criteria();
+        criteria.where("timestampstr").ne("").ne(null).exists(true);
+        Query query = new Query(criteria).with(new Sort(new Sort.Order(Sort.Direction.DESC,"timestampstr"))).limit(1);
+        return mongoTemplate.findOne(query,OutCarEntity.class);
+    }
 
+    @Override
+    public Collection insertOutCarAll(List<OutCarEntity> gpslist) {
+        return mongoTemplate.insertAll(gpslist);
+    }
+
+    @Override
+    public List<GPSMultiLineStirng> ShapeCountByLine() {
+        return null;
+    }
 
 }
